@@ -1,0 +1,100 @@
+server:
+  port: 8081
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+info:
+  tags:
+    environment: ${env}
+spring:
+  application:
+    name: Kafka Consumer
+  jmx:
+    enabled: true
+  boot:
+    admin:
+      client:
+        url: http://localhost:8081
+        instance:
+          metadata:
+            tags:
+              environment: ${env}
+  main:
+    banner-mode: 'off'
+    allow-bean-definition-overriding: true
+  info:
+    git:
+      location: classpath:git.properties
+  debug: true
+  kafka:
+    bootstrap-servers: <BOOTSTRAP_SERVERS>
+    properties:
+      security:
+        protocol: SASL_SSL
+      sasl:
+        mechanism: OAUTHBEARER
+        login:
+         callback:
+          handler:
+            class: com.kafka.security.azure.ServicePrincipalAuthCallback
+     
+        jaas:
+          config: org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+       
+    consumer:          
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      #spring.kafka.consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      #spring.kafka.consumer.value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      #group-id: Umesh-10
+      #spring.kafka.consumer.properties.spring.json.trusted.packages: "*"
+      properties:
+        max.poll.records: 125
+        partition.assignment.strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+    
+    listener:
+      type: single
+      ack-mode: batch
+
+    producer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+---
+spring:
+  profiles: SP
+       
+  kafka:
+    properties:
+      sasl:
+       login:
+         callback:
+          handler:
+            class: com.kafka.security.azure.ServicePrincipalAuthCallback
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure.include: "*"
+  server:
+    port: 8081
+
+################ Log4j properties ######################################
+
+debug: false
+trace: false
+
+logging:
+  level:
+    com.kafka.consumer: DEBUG
+    org.springframework: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+    file: "%d %p %c{1.} [%t] %m%n"
+  file: kafka_producer.log
+            
+
+             
